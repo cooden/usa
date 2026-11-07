@@ -58,7 +58,7 @@ python -m http.server 8080
 
 ## 发布到 GitHub Pages
 
-1. 在 GitHub 新建一个空仓库（例如 `us-culture-map`），不要勾选初始化 README。
+1. 在 GitHub 新建一个空仓库（例如 `usa`），不要勾选初始化 README。
 2. 在本目录执行：
 
 ```bash
@@ -66,12 +66,12 @@ git init
 git add .
 git commit -m "feat: 美国文化地图（最终版 + 简版）"
 git branch -M main
-git remote add origin https://github.com/<你的用户名>/us-culture-map.git
+git remote add origin https://github.com/<你的用户名>/usa.git
 git push -u origin main
 ```
 
 3. 打开仓库 **Settings → Pages**，Source 选择 **Deploy from a branch**，分支选 `main`，目录选 `/ (root)`，保存。
-4. 一两分钟后访问 `https://<你的用户名>.github.io/us-culture-map/`。
+4. 一两分钟后访问 `https://<你的用户名>.github.io/usa/`。
 
 页面全部使用相对路径，部署在仓库子路径下也能正常工作。简版地址为 `/simple/`。
 
