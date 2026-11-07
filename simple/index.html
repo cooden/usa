@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>美国文化地图 · 简版</title>
+<meta name="description" content="美国文化地图简版：悬停任意一州查看它的文化名片。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f4ed'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='32' fill='%23b5432f' font-family='Georgia'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper: #f7f4ed;
+    --card: #fffdf9;
+    --ink: #1a1c20;
+    --muted: #6d7078;
+    --line: #e2dbcd;
+    --accent: #b5432f;
+    --ne: #d3dff7;
+    --mw: #f3ddb4;
+    --so: #f7d0c4;
+    --we: #c7e8df;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 34px 24px 70px; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 13px; letter-spacing: 0.14em; }
+  .brand i {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fff;
+    font-style: normal;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  header a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+  }
+  header a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .intro { padding: 54px 0 34px; max-width: 720px; }
+  .kicker { margin: 0 0 14px; font-size: 10px; letter-spacing: 0.3em; color: #9a9488; }
+  h1 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+    font-weight: 400;
+    font-size: clamp(42px, 7vw, 72px);
+    line-height: 1.06;
+    letter-spacing: 0.02em;
+  }
+  h1 span { color: var(--accent); font-style: italic; }
+  .intro p {
+    margin: 20px 0 0;
+    font-size: 14px;
+    line-height: 1.95;
+    color: var(--muted);
+  }
+
+  .map-card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 24px 60px rgba(58, 46, 30, 0.07);
+  }
+  .map-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: #a8a294;
+  }
+  .map-top .dot { width: 6px; height: 6px; border-radius: 50%; background: #c8b98f; }
+  .map-top span:last-child { margin-left: auto; }
+  #map { display: block; width: 100%; height: auto; overflow: visible; }
+  #states path {
+    fill: #e9e3d7;
+    stroke: #fbf8f1;
+    stroke-width: 1.1;
+    cursor: pointer;
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    transition: fill 0.22s ease, stroke 0.22s ease, transform 0.24s ease, opacity 0.22s ease;
+    outline: none;
+  }
+  #states path[data-region="northeast"] { fill: var(--ne); }
+  #states path[data-region="midwest"] { fill: var(--mw); }
+  #states path[data-region="south"] { fill: var(--so); }
+  #states path[data-region="west"] { fill: var(--we); }
+  #states path:hover,
+  #states path:focus-visible {
+    fill: var(--accent);
+    stroke: #fff;
+    stroke-width: 1.6;
+    transform: scale(1.025);
+    filter: drop-shadow(0 4px 10px rgba(139, 50, 35, 0.35));
+  }
+  #states path.is-active {
+    fill: var(--accent);
+    stroke: #7d2a1c;
+    stroke-width: 1.5;
+  }
+  #states:hover path:not(:hover) { opacity: 0.55; }
+
+  .tip {
+    position: absolute;
+    z-index: 10;
+    padding: 8px 11px;
+    border-radius: 8px;
+    background: #1c1e23;
+    color: #fff;
+    font-size: 11.5px;
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 12px));
+    transition: opacity 0.14s ease;
+    white-space: nowrap;
+  }
+  .tip.on { opacity: 1; }
+  .tip small { color: #a9acb4; font-size: 10px; margin-left: 5px; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 14px 6px 2px;
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 9px; height: 9px; border-radius: 2px; }
+
+  /* 详情卡 */
+  .detail {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 30px;
+    margin-top: 18px;
+    padding: 30px 32px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    min-height: 218px;
+  }
+  .d-left { border-right: 1px solid var(--line); padding-right: 30px; }
+  .d-kicker { font-size: 9.5px; letter-spacing: 0.22em; color: #a8a294; text-transform: uppercase; }
+  .d-name {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .d-name h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: 0.02em;
+  }
+  .d-name em { font-style: italic; font-size: 12px; color: #a8a294; }
+  .d-title { margin: 8px 0 0; font-size: 12px; color: var(--accent); letter-spacing: 0.06em; }
+  .d-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .d-tags span {
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .d-desc { margin: 14px 0 0; font-size: 12px; line-height: 1.9; color: #5d6068; }
+
+  .d-right dl {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 0 14px;
+    margin: 0;
+  }
+  .d-right dt {
+    padding: 9px 0;
+    border-bottom: 1px solid #f0ebe0;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #a8a294;
+  }
+  .d-right dd {
+    margin: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0ebe0;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .d-city { margin: 14px 0 0; font-size: 11px; color: #a8a294; }
+  .d-city b { color: #5d6068; font-weight: 500; }
+
+  .empty h2 { font-family: Georgia, "Songti SC", serif; font-weight: 400; font-size: 30px; margin: 8px 0 0; }
+  .empty p { margin: 10px 0 0; font-size: 12.5px; line-height: 1.9; color: var(--muted); max-width: 520px; }
+  .empty .hint { margin-top: 16px; font-size: 10px; letter-spacing: 0.16em; color: #b3ad9f; }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 10.5px;
+    color: #a8a294;
+  }
+  footer a { margin-left: auto; color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 24px 16px 50px; }
+    .intro { padding: 36px 0 26px; }
+    .detail { grid-template-columns: 1fr; gap: 18px; padding: 24px 20px; }
+    .d-left { border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 18px; }
+    .map-card { padding: 10px; }
+    header .brand { font-size: 11px; letter-spacing: 0.08em; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><i>US</i>美国文化地图 · 简版</div>
+    <a href="../">查看最终版 →</a>
+  </header>
+
+  <div class="intro">
+    <p class="kicker">A SIMPLE CULTURAL MAP</p>
+    <h1>五十个州，<br><span>五十种</span>美国。</h1>
+    <p>悬停任意一个州，它会亮起；点击，下面会展开一张文化名片——音乐、食物、地标与人物。</p>
+  </div>
+
+  <div class="map-card" id="mapCard">
+    <div class="map-top">
+      <span class="dot"></span>
+      <span>UNITED STATES · CULTURAL ATLAS</span>
+      <span>悬停查看 · 点击展开</span>
+    </div>
+    <svg id="map" viewBox="-58 13 1016 594" role="img" aria-label="美国各州文化地图"></svg>
+    <div class="tip" id="tip"></div>
+    <div class="legend">
+      <span><i style="background:var(--ne)"></i>东北部</span>
+      <span><i style="background:var(--mw)"></i>中西部</span>
+      <span><i style="background:var(--so)"></i>南部</span>
+      <span><i style="background:var(--we)"></i>西部</span>
+    </div>
+  </div>
+
+  <div class="detail" id="detail"></div>
+
+  <footer>
+    <span>美国文化地图 · 简版</span>
+    <span>文化条目为公共文化常识整理，仅用于展示与学习。</span>
+    <a href="../">回到最终版 →</a>
+  </footer>
+</div>
+
+<script src="../assets/us-paths.js"></script>
+<script src="../assets/fips.js"></script>
+<script src="../assets/data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  var REGIONS = window.US_CULTURE.regions;
+  var STATES = window.US_CULTURE.states;
+  var FIPS = window.US_FIPS;
+
+  var svg = document.getElementById('map');
+  var tip = document.getElementById('tip');
+  var detail = document.getElementById('detail');
+  var card = document.getElementById('mapCard');
+  var stateEls = {};
+  var selected = null;
+
+  var g = document.createElementNS(NS, 'g');
+  g.id = 'states';
+  svg.appendChild(g);
+
+  window.US_STATE_PATHS.forEach(function (item) {
+    var abbr = FIPS[item.id];
+    var info = STATES[abbr];
+    if (!abbr || !info) return;
+
+    var p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', item.d);
+    p.setAttribute('data-abbr', abbr);
+    p.setAttribute('data-region', info.region);
+    p.setAttribute('tabindex', '0');
+    p.setAttribute('role', 'button');
+    p.setAttribute('aria-label', info.name + '，' + info.en);
+
+    p.addEventListener('mouseenter', function () { showTip(abbr); });
+    p.addEventListener('mousemove', moveTip);
+    p.addEventListener('mouseleave', hideTip);
+    p.addEventListener('click', function () { select(abbr); });
+    p.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(abbr); }
+    });
+
+    g.appendChild(p);
+    stateEls[abbr] = p;
+  });
+
+  function showTip(abbr) {
+    var info = STATES[abbr];
+    tip.innerHTML = info.name + ' <small>' + info.en + '</small>';
+    tip.classList.add('on');
+  }
+  function moveTip(e) {
+    var r = card.getBoundingClientRect();
+    tip.style.left = (e.clientX - r.left) + 'px';
+    tip.style.top = (e.clientY - r.top) + 'px';
+  }
+  function hideTip() { tip.classList.remove('on'); }
+
+  function select(abbr) {
+    selected = abbr;
+    Object.keys(stateEls).forEach(function (key) {
+      stateEls[key].classList.toggle('is-active', key === abbr);
+    });
+    render(abbr);
+    if (window.innerWidth < 820) {
+      detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function render(abbr) {
+    if (!abbr) {
+      detail.classList.add('empty');
+      detail.innerHTML =
+        '<div class="d-left">' +
+          '<div class="d-kicker">READY WHEN YOU ARE</div>' +
+          '<h2>点击一个州</h2>' +
+          '<p>地图按四大文化区着色。把鼠标放上去，它会变成这个州的颜色；点击后，这里会出现它的文化名片。</p>' +
+          '<div class="hint">HOVER · CLICK · READ</div>' +
+        '</div>' +
+        '<div class="d-right">' +
+          '<p style="margin:0;font-size:12.5px;line-height:1.95;color:#6d7078;">' +
+          '从缅因的龙虾船到路易斯安那的铜管乐，从堪萨斯的麦田到夏威夷的火山——每个州都有一件值得被记住的事。</p>' +
+        '</div>';
+      return;
+    }
+
+    detail.classList.remove('empty');
+    var info = STATES[abbr];
+    var region = REGIONS[info.region];
+    detail.innerHTML =
+      '<div class="d-left">' +
+        '<div class="d-kicker">' + region.name + ' · ' + region.en.toUpperCase() + '</div>' +
+        '<div class="d-name"><h2>' + info.name + '</h2><em>' + info.en + '</em></div>' +
+        '<p class="d-title">' + info.title + '</p>' +
+        '<div class="d-tags">' + info.tags.map(function (t) { return '<span>' + t + '</span>'; }).join('') + '</div>' +
+        '<p class="d-desc">' + info.desc + '</p>' +
+      '</div>' +
+      '<div class="d-right">' +
+        '<dl>' +
+          '<dt>音乐</dt><dd>' + info.music + '</dd>' +
+          '<dt>食物</dt><dd>' + info.food + '</dd>' +
+          '<dt>地标</dt><dd>' + info.landmark + '</dd>' +
+          '<dt>人物</dt><dd>' + info.figure + '</dd>' +
+        '</dl>' +
+        '<p class="d-city">代表城市 / 地区：<b>' + info.city + '</b></p>' +
+      '</div>';
+  }
+
+  render(null);
+})();
+</script>
+</body>
+</html>
