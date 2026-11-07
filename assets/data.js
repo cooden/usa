@@ -1,10 +1,10 @@
 /* 美国文化地图 · 内容数据（纯静态，无外部依赖） */
 window.US_CULTURE = {
   regions: {
-    northeast: { name: '东北部', en: 'Northeast', color: '#7C9CFF', desc: '港口、学院与移民的起点' },
-    midwest: { name: '中西部', en: 'Midwest', color: '#F4B860', desc: '五大湖、玉米带与工厂的节拍' },
-    south: { name: '南部', en: 'South', color: '#FF7D5C', desc: '爵士、烧烤与民权的记忆' },
-    west: { name: '西部', en: 'West', color: '#3FD0B4', desc: '荒野、淘金与太平洋的风' }
+    northeast: { name: '东北部', en: 'Northeast', color: '#4368e0', desc: '港口、学院与移民的起点' },
+    midwest: { name: '中西部', en: 'Midwest', color: '#9e6a0b', desc: '五大湖、玉米带与工厂的节拍' },
+    south: { name: '南部', en: 'South', color: '#d04627', desc: '爵士、烧烤与民权的记忆' },
+    west: { name: '西部', en: 'West', color: '#0b8a76', desc: '荒野、淘金与太平洋的风' }
   },
 
   states: {
