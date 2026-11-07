@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>美国文化地图 · A Cultural Atlas of the United States</title>
-<meta name="description" content="一张可交互的美国文化地图：悬停任意一州，看见它的音乐、食物、地标与人物；沿着六条文化走廊，读懂美国。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0d14'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='32' fill='%23F4B860' font-family='Georgia'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<title>美国文化地图</title>
+<meta name="description" content="美国 50 个州与华盛顿特区的文化地图：音乐、食物、地标、人物，按四大文化区着色，可筛选、搜索，并沿六条文化走廊查看。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fdfcf9'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='32' fill='%239e6a0b' font-family='Georgia'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
 
 <header class="topbar">
   <a class="brand" href="#top">
     <span class="brand-mark">US</span>
-    <span class="brand-text">美国文化地图<small>CULTURAL ATLAS</small></span>
+    <span class="brand-text">美国文化地图</span>
   </a>
   <nav class="nav">
     <a href="#atlas">地图</a>
@@ -26,24 +25,22 @@
 
 <main id="top">
   <section class="hero">
-    <p class="eyebrow"><span></span>FIFTY STATES · ONE CULTURE</p>
-    <h1>美国<span class="accent">文化</span>地图</h1>
-    <p class="lede">从新英格兰的港口到密西西比三角洲，从玉米带的小镇到太平洋岸的冲浪板。悬停任何一个州，听见它的声音、味道与记忆。</p>
+    <h1>美国文化地图</h1>
+    <p class="lede">50 个州和华盛顿特区，每个州列一样音乐、一样食物、一处地标和一个人物。地图按美国人口普查局的四大文化区着色，可以悬停、点击、筛选和搜索。</p>
     <div class="stats">
       <div class="stat"><strong>51</strong><span>州与特区</span></div>
-      <div class="stat"><strong>04</strong><span>文化区</span></div>
-      <div class="stat"><strong>06</strong><span>文化走廊</span></div>
-      <div class="stat"><strong>306</strong><span>张文化名片</span></div>
+      <div class="stat"><strong>4</strong><span>文化区</span></div>
+      <div class="stat"><strong>6</strong><span>文化走廊</span></div>
+      <div class="stat"><strong>306</strong><span>条文化条目</span></div>
     </div>
   </section>
 
   <section class="atlas" id="atlas">
     <div class="section-head">
       <div>
-        <p class="eyebrow"><span></span>THE INTERACTIVE MAP</p>
-        <h2>悬停，点亮一个州</h2>
+        <h2>各州文化名片</h2>
       </div>
-      <p class="section-note">Hover to preview · Click to pin the full card</p>
+      <p class="section-note">悬停查看摘要，点击查看完整名片</p>
     </div>
 
     <div class="toolbar">
@@ -53,15 +50,15 @@
         <input id="search" type="search" placeholder="搜索州名、音乐、食物、标签…" autocomplete="off" aria-label="搜索州">
         <span class="search-esc">Esc</span>
       </label>
-      <button class="ghost-btn" id="randomBtn" type="button" aria-label="随机漫游一州"><span class="gb-text">随机漫游</span> <span>↻</span></button>
+      <button class="ghost-btn" id="randomBtn" type="button" aria-label="随机看一个州"><span class="gb-text">随机看一州</span> <span>↻</span></button>
     </div>
 
     <div class="atlas-grid">
       <div class="map-card" id="mapCard">
         <div class="map-topline">
           <span class="live-dot"></span>
-          <span id="mapStatus">51 个州与特区 · 全美视野</span>
-          <span class="map-hint">悬停查看 · 点击固定</span>
+          <span id="mapStatus">51 个州与特区</span>
+          <span class="map-hint">悬停预览，点击查看</span>
         </div>
 
         <div class="map-canvas" id="mapCanvas">
@@ -95,31 +92,29 @@
   <section class="corridors" id="corridors">
     <div class="section-head">
       <div>
-        <p class="eyebrow"><span></span>SIX CULTURAL CORRIDORS</p>
-        <h2>沿着一条线索，穿过几个州</h2>
+        <h2>六条文化走廊</h2>
       </div>
-      <p class="section-note">点击任意走廊，让地图同时亮起它的州</p>
+      <p class="section-note">点击一条走廊，地图上对应的州会一起高亮</p>
     </div>
     <div class="corridor-grid" id="corridorGrid"></div>
   </section>
 
   <section class="about" id="about">
     <div class="about-copy">
-      <p class="eyebrow"><span></span>ABOUT THIS ATLAS</p>
-      <h2>文化不是边界，<br>而是流动的路线。</h2>
-      <p>这张地图按美国人口普查局的四大文化区着色，为 50 个州与华盛顿特区各整理了一张文化名片：一种声音、一道食物、一处地标、一个人物。它不追求完整，只想提供一条进入美国的路径。</p>
+      <h2>关于这张地图</h2>
+      <p>州界数据来自 U.S. Atlas 的 10m TopoJSON，采用 Albers USA 投影，包含阿拉斯加和夏威夷。四大文化区按美国人口普查局的划分。每个州的文化条目是公共文化常识的整理，不追求完整。</p>
     </div>
     <div class="about-meta">
       <div><span>州界数据</span><strong>U.S. Atlas · 10m TopoJSON</strong></div>
       <div><span>投影方式</span><strong>Albers USA（含阿拉斯加 / 夏威夷）</strong></div>
-      <div><span>文化条目</span><strong>51 州 · 306 张名片 · 6 条走廊</strong></div>
+      <div><span>文化条目</span><strong>51 州 · 306 条 · 6 条走廊</strong></div>
       <div><span>技术栈</span><strong>原生 HTML / CSS / JS，无运行时依赖</strong></div>
     </div>
   </section>
 </main>
 
 <footer>
-  <div class="footer-brand">美国文化地图 <span>CULTURAL ATLAS OF THE U.S.</span></div>
+  <div class="footer-brand">美国文化地图</div>
   <p>文化条目为公共文化常识整理，仅用于展示与学习。州界数据 © U.S. Atlas / Natural Earth。</p>
   <a href="simple/">查看效果简版 →</a>
 </footer>

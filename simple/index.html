@@ -58,7 +58,6 @@
   header a:hover { color: var(--accent); border-color: var(--accent); }
 
   .intro { padding: 54px 0 34px; max-width: 720px; }
-  .kicker { margin: 0 0 14px; font-size: 10px; letter-spacing: 0.3em; color: #9a9488; }
   h1 {
     margin: 0;
     font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
@@ -67,7 +66,6 @@
     line-height: 1.06;
     letter-spacing: 0.02em;
   }
-  h1 span { color: var(--accent); font-style: italic; }
   .intro p {
     margin: 20px 0 0;
     font-size: 14px;
@@ -168,7 +166,7 @@
     min-height: 218px;
   }
   .d-left { border-right: 1px solid var(--line); padding-right: 30px; }
-  .d-kicker { font-size: 9.5px; letter-spacing: 0.22em; color: #a8a294; text-transform: uppercase; }
+  .d-kicker { font-size: 10px; letter-spacing: 0.08em; color: #a8a294; }
   .d-name {
     display: flex;
     align-items: baseline;
@@ -254,16 +252,15 @@
   </header>
 
   <div class="intro">
-    <p class="kicker">A SIMPLE CULTURAL MAP</p>
-    <h1>五十个州，<br><span>五十种</span>美国。</h1>
-    <p>悬停任意一个州，它会亮起；点击，下面会展开一张文化名片——音乐、食物、地标与人物。</p>
+    <h1>美国文化地图</h1>
+    <p>50 个州和华盛顿特区，按四大文化区着色。悬停查看州名，点击下面显示它的音乐、食物、地标和人物。</p>
   </div>
 
   <div class="map-card" id="mapCard">
     <div class="map-top">
       <span class="dot"></span>
-      <span>UNITED STATES · CULTURAL ATLAS</span>
-      <span>悬停查看 · 点击展开</span>
+      <span>美国各州 · 按文化区着色</span>
+      <span>悬停查看，点击展开</span>
     </div>
     <svg id="map" viewBox="-58 13 1016 594" role="img" aria-label="美国各州文化地图"></svg>
     <div class="tip" id="tip"></div>
@@ -359,14 +356,13 @@
       detail.classList.add('empty');
       detail.innerHTML =
         '<div class="d-left">' +
-          '<div class="d-kicker">READY WHEN YOU ARE</div>' +
+          '<div class="d-kicker">使用说明</div>' +
           '<h2>点击一个州</h2>' +
-          '<p>地图按四大文化区着色。把鼠标放上去，它会变成这个州的颜色；点击后，这里会出现它的文化名片。</p>' +
-          '<div class="hint">HOVER · CLICK · READ</div>' +
+          '<p>地图按四大文化区着色。鼠标移上去会显示州名，点击后这里出现音乐、食物、地标和人物。</p>' +
         '</div>' +
         '<div class="d-right">' +
           '<p style="margin:0;font-size:12.5px;line-height:1.95;color:#6d7078;">' +
-          '从缅因的龙虾船到路易斯安那的铜管乐，从堪萨斯的麦田到夏威夷的火山——每个州都有一件值得被记住的事。</p>' +
+          '四个文化区按美国人口普查局的划分，州界数据来自 U.S. Atlas。每个州有一份简要介绍，以及音乐、食物、地标、人物和代表城市。</p>' +
         '</div>';
       return;
     }
@@ -376,7 +372,7 @@
     var region = REGIONS[info.region];
     detail.innerHTML =
       '<div class="d-left">' +
-        '<div class="d-kicker">' + region.name + ' · ' + region.en.toUpperCase() + '</div>' +
+        '<div class="d-kicker">' + region.name + ' · ' + region.en + '</div>' +
         '<div class="d-name"><h2>' + info.name + '</h2><em>' + info.en + '</em></div>' +
         '<p class="d-title">' + info.title + '</p>' +
         '<div class="d-tags">' + info.tags.map(function (t) { return '<span>' + t + '</span>'; }).join('') + '</div>' +

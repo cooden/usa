@@ -129,21 +129,20 @@
       panel.style.removeProperty('--accent');
       panel.innerHTML =
         '<div class="panel-empty">' +
-          '<div class="panel-kicker"><i class="live-dot"></i> READING THE MAP</div>' +
-          '<h3>先从一个州开始</h3>' +
-          '<p>把鼠标移到地图上，任意一个州都会亮起。点击它，这里会展开一整张文化名片：一种声音、一道食物、一处地标与一个人物。</p>' +
+          '<h3>选择一个州</h3>' +
+          '<p>鼠标移到地图上会显示州名和文化标签，点击后这里显示完整名片。</p>' +
           '<div class="panel-regions">' +
             Object.keys(REGIONS).map(key => {
               const r = REGIONS[key];
               return '<div class="panel-region-row">' +
                 '<i style="--c:' + r.color + '"></i>' +
-                '<b>' + r.name + '</b><small>' + r.en.toUpperCase() + '</small>' +
+                '<b>' + r.name + '</b><small>' + r.en + '</small>' +
                 '<span>' + regionCount[key] + ' 州</span>' +
               '</div>';
             }).join('') +
           '</div>' +
           '<div class="panel-tip"><b>提示</b><span>按 Esc 可以取消选中；点击上方文化区或图例，只保留该区域的州。</span></div>' +
-          '<div class="panel-foot-note">CLICK A STATE · ESC TO CLEAR</div>' +
+          '<div class="panel-foot-note">点击查看 · Esc 取消</div>' +
         '</div>';
       return;
     }
@@ -158,7 +157,7 @@
     panel.innerHTML =
       '<div class="panel-state">' +
         '<span class="panel-watermark">' + abbr + '</span>' +
-        '<div class="panel-kicker"><i></i>' + region.name + ' · ' + region.en.toUpperCase() + '</div>' +
+        '<div class="panel-kicker"><i></i>' + region.name + ' · ' + region.en + '</div>' +
         '<div class="panel-title"><h3>' + info.name + '</h3><span>' + info.en + '</span></div>' +
         '<div class="panel-nick">' + info.title + '</div>' +
         '<div class="tag-row">' + info.tags.map(t => '<span>' + t + '</span>').join('') + '</div>' +
@@ -171,7 +170,7 @@
         '</dl>' +
         '<div class="panel-city"><span>代表城市 / 地区</span><strong>' + info.city + '</strong></div>' +
         '<div class="panel-actions">' +
-          '<button type="button" class="primary" data-action="random">随机下一州 →</button>' +
+          '<button type="button" class="primary" data-action="random">换一个州 →</button>' +
           '<button type="button" data-action="region">只看' + region.name + '</button>' +
         '</div>' +
       '</div>';
@@ -276,7 +275,7 @@
     } else if (regionFilter !== 'all') {
       statusEl.textContent = REGIONS[regionFilter].name + ' · ' + count + ' 个州';
     } else {
-      statusEl.textContent = '51 个州与特区 · 全美视野';
+      statusEl.textContent = '51 个州与特区';
     }
   }
 
