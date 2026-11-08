@@ -1,17 +1,16 @@
 /* =========================================================
-   美国文化地图 · 最终版交互
+   美国文化地图 · 最终版交互（Three.js 3D 地图）
    ========================================================= */
 (function () {
   'use strict';
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
   const culture = window.US_CULTURE;
   const REGIONS = culture.regions;
   const STATES = culture.states;
   const CORRIDORS = culture.corridors;
   const FIPS = window.US_FIPS;
 
-  const svg = document.getElementById('map');
+  const mapCanvas = document.getElementById('mapCanvas');
   const panel = document.getElementById('panel');
   const tooltip = document.getElementById('tooltip');
   const statusEl = document.getElementById('mapStatus');
@@ -22,8 +21,10 @@
   const banner = document.getElementById('corridorBanner');
   const cbName = document.getElementById('cbName');
   const cbDesc = document.getElementById('cbDesc');
+  const atlasGrid = document.getElementById('atlasGrid');
 
-  const stateEls = {};
+  const stateEls = {};       // abbr -> state wrapper
+  const meshToState = new Map();
   const regionCount = { northeast: 0, midwest: 0, south: 0, west: 0 };
   Object.values(STATES).forEach(s => { regionCount[s.region] += 1; });
 
@@ -31,47 +32,318 @@
   let query = '';
   let activeCorridor = null;
   let selected = null;
+  let hovered = null;
 
-  /* ---------- 构建地图 ---------- */
-  const g = document.createElementNS(SVG_NS, 'g');
-  g.setAttribute('id', 'states');
-  svg.appendChild(g);
+  /* ---------- 区域配色 ---------- */
+  const REGION_BASE = {
+    northeast: 0x5b7bd6,
+    midwest:   0xc89a3a,
+    south:     0xd96648,
+    west:      0x34a888
+  };
 
-  window.US_STATE_PATHS.forEach(item => {
+  /* ---------- SVG path 解析 ---------- */
+  function parsePath(d) {
+    const subs = [];
+    let cur = null;
+    let x = 0, y = 0, cx = 0, cy = 0;
+    const tokens = d.match(/[a-zA-Z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g) || [];
+    let i = 0;
+    while (i < tokens.length) {
+      const t = tokens[i];
+      if (/[a-zA-Z]/.test(t)) {
+        const cmd = t; i++;
+        const rel = cmd === cmd.toLowerCase();
+        const abs = cmd.toUpperCase();
+        if (abs === 'M') {
+          cur = []; subs.push(cur);
+          x = +tokens[i++]; y = +tokens[i++];
+          if (rel) { x += cx; y += cy; }
+          cur.push([x, y]); cx = x; cy = y;
+          while (i < tokens.length && !/[a-zA-Z]/.test(tokens[i])) {
+            x = +tokens[i++]; y = +tokens[i++];
+            if (rel) { x += cx; y += cy; }
+            cur.push([x, y]); cx = x; cy = y;
+          }
+        } else if (abs === 'L') {
+          while (i < tokens.length && !/[a-zA-Z]/.test(tokens[i])) {
+            x = +tokens[i++]; y = +tokens[i++];
+            if (rel) { x += cx; y += cy; }
+            cur.push([x, y]); cx = x; cy = y;
+          }
+        } else if (abs === 'H') {
+          while (i < tokens.length && !/[a-zA-Z]/.test(tokens[i])) {
+            x = +tokens[i++]; if (rel) x += cx;
+            cur.push([x, cy]); cx = x;
+          }
+        } else if (abs === 'V') {
+          while (i < tokens.length && !/[a-zA-Z]/.test(tokens[i])) {
+            y = +tokens[i++]; if (rel) y += cy;
+            cur.push([cx, y]); cy = y;
+          }
+        } else if (abs === 'Z') {
+          /* close */
+        } else {
+          // 未知命令，跳过
+        }
+      } else {
+        i++;
+      }
+    }
+    return subs.filter(s => s && s.length > 1);
+  }
+
+  /* ---------- Three.js 初始化 ---------- */
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05070b);
+  scene.fog = new THREE.Fog(0x05070b, 40, 80);
+
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  mapCanvas.appendChild(renderer.domElement);
+  renderer.domElement.style.display = 'block';
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.cursor = 'grab';
+
+  // 灯光
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+  dirLight.position.set(10, 24, 12);
+  scene.add(dirLight);
+  const rimLight = new THREE.DirectionalLight(0x8fb4ff, 0.3);
+  rimLight.position.set(-12, 10, -14);
+  scene.add(rimLight);
+
+  const mapGroup = new THREE.Group();
+  scene.add(mapGroup);
+
+  /* ---------- 计算整体边界并构建州 ---------- */
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const parsed = window.US_STATE_PATHS.map(item => {
+    const subs = parsePath(item.d);
+    subs.forEach(pts => pts.forEach(([x, y]) => {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }));
+    return { item, subs };
+  });
+
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const maxDim = Math.max(maxX - minX, maxY - minY);
+  const SCALE = 30 / maxDim;
+  const EXTRUDE = 0.9;
+
+  parsed.forEach(({ item, subs }) => {
     const abbr = FIPS[item.id];
     const info = STATES[abbr];
     if (!abbr || !info) return;
 
-    const el = document.createElementNS(SVG_NS, 'path');
-    el.setAttribute('d', item.d);
-    el.setAttribute('class', 'st');
-    el.setAttribute('data-abbr', abbr);
-    el.setAttribute('data-region', info.region);
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-label', info.name + '，' + info.en + '，' + info.title);
-    el.dataset.hovered = 'false';
-
-    el.addEventListener('mouseenter', () => hoverState(abbr));
-    el.addEventListener('mousemove', moveTooltip);
-    el.addEventListener('mouseleave', hideTooltip);
-    el.addEventListener('click', () => selectState(abbr, true));
-    el.addEventListener('focus', () => {
-      hoverState(abbr, true);
-      const r = el.getBoundingClientRect();
-      placeTooltip(r.left + r.width / 2, r.top + r.height / 2, true);
+    const baseColor = REGION_BASE[info.region];
+    const material = new THREE.MeshStandardMaterial({
+      color: baseColor,
+      metalness: 0.15,
+      roughness: 0.62,
+      flatShading: true,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
     });
-    el.addEventListener('blur', hideTooltip);
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        selectState(abbr, true);
+
+    const group = new THREE.Group();
+    group.userData.abbr = abbr;
+    subs.forEach(pts => {
+      if (pts.length < 3) return;
+      const shape = new THREE.Shape();
+      shape.moveTo((pts[0][0] - cx) * SCALE, -(pts[0][1] - cy) * SCALE);
+      for (let k = 1; k < pts.length; k++) {
+        shape.lineTo((pts[k][0] - cx) * SCALE, -(pts[k][1] - cy) * SCALE);
       }
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: EXTRUDE, bevelEnabled: false });
+      geom.rotateX(-Math.PI / 2);
+      geom.computeVertexNormals();
+      const mesh = new THREE.Mesh(geom, material);
+      mesh.userData.abbr = abbr;
+      group.add(mesh);
+      meshToState.set(mesh, abbr);
     });
 
-    g.appendChild(el);
-    stateEls[abbr] = el;
+    mapGroup.add(group);
+
+    stateEls[abbr] = {
+      abbr,
+      region: info.region,
+      group,
+      material,
+      baseColor,
+      baseY: 0,
+      targetY: 0,
+      targetScale: 1,
+      hovered: false,
+      selected: false,
+      dimmed: false,
+      corridor: false,
+      update() {
+        let y = 0;
+        let sc = 1;
+        if (this.selected) { y = 1.8; sc = 1.05; }
+        else if (this.hovered) { y = 1.5; sc = 1.08; }
+        else if (this.corridor) { y = 0.6; sc = 1.0; }
+        this.targetY = y;
+        this.targetScale = sc;
+
+        const active = this.hovered || this.selected;
+        this.material.emissive.setHex(active ? this.baseColor : (this.corridor ? this.baseColor : 0x000000));
+        this.material.emissiveIntensity = active ? (this.selected ? 0.95 : 0.8) : (this.corridor ? 0.35 : 0);
+        this.material.transparent = this.dimmed;
+        this.material.opacity = this.dimmed ? 0.1 : 1;
+        if (this.dimmed) {
+          const c = new THREE.Color(this.baseColor).multiplyScalar(0.45);
+          this.material.color.copy(c);
+        } else {
+          this.material.color.setHex(this.baseColor);
+        }
+      }
+    };
   });
+
+  /* ---------- 相机 / 轨道控制 ---------- */
+  const orbit = { radius: 44, theta: 0, phi: 1.0, target: new THREE.Vector3(0, 0, 0) };
+  function updateCamera() {
+    const r = orbit.radius;
+    const sp = Math.sin(orbit.phi);
+    camera.position.set(
+      orbit.target.x + r * sp * Math.sin(orbit.theta),
+      orbit.target.y + r * Math.cos(orbit.phi),
+      orbit.target.z + r * sp * Math.cos(orbit.theta)
+    );
+    camera.lookAt(orbit.target);
+  }
+  updateCamera();
+
+  /* ---------- 渲染循环（含升降动画） ---------- */
+  function animate() {
+    requestAnimationFrame(animate);
+    Object.values(stateEls).forEach(s => {
+      s.group.position.y += (s.targetY - s.group.position.y) * 0.18;
+      const cur = s.group.scale.x;
+      const next = cur + (s.targetScale - cur) * 0.18;
+      s.group.scale.setScalar(next);
+    });
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  function resize() {
+    const w = mapCanvas.clientWidth || 1;
+    const h = mapCanvas.clientHeight || 1;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ---------- 交互：raycaster + 轨道 ---------- */
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let dragging = false;
+  let dragMoved = false;
+  let downX = 0, downY = 0, lastX = 0, lastY = 0;
+
+  function ndcFromEvent(e) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+
+  function pickState(e) {
+    ndcFromEvent(e);
+    raycaster.setFromCamera(pointer, camera);
+    const meshes = [];
+    mapGroup.traverse(o => { if (o.isMesh) meshes.push(o); });
+    const hits = raycaster.intersectObjects(meshes, false);
+    if (hits.length) {
+      return meshToState.get(hits[0].object) || null;
+    }
+    return null;
+  }
+
+  renderer.domElement.addEventListener('pointerdown', e => {
+    dragging = true;
+    dragMoved = false;
+    downX = lastX = e.clientX;
+    downY = lastY = e.clientY;
+    renderer.domElement.style.cursor = 'grabbing';
+  });
+
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (dragging) {
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      if (Math.abs(e.clientX - downX) > 4 || Math.abs(e.clientY - downY) > 4) dragMoved = true;
+      orbit.theta -= dx * 0.005;
+      orbit.phi = Math.max(0.18, Math.min(Math.PI / 2 - 0.06, orbit.phi - dy * 0.005));
+      updateCamera();
+      return;
+    }
+    const abbr = pickState(e);
+    setHover(abbr);
+    if (abbr) {
+      placeTooltip(e.clientX, e.clientY);
+    } else {
+      hideTooltip();
+    }
+  });
+
+  renderer.domElement.addEventListener('pointerup', e => {
+    dragging = false;
+    renderer.domElement.style.cursor = 'grab';
+  });
+
+  renderer.domElement.addEventListener('click', e => {
+    const abbr = pickState(e);
+    if (dragMoved) return;
+    if (abbr) selectState(abbr, true);
+  });
+
+  renderer.domElement.addEventListener('pointerleave', () => {
+    dragging = false;
+    setHover(null);
+    hideTooltip();
+  });
+
+  renderer.domElement.addEventListener('wheel', e => {
+    e.preventDefault();
+    orbit.radius = Math.max(20, Math.min(80, orbit.radius * (1 + e.deltaY * 0.0012)));
+    updateCamera();
+  }, { passive: false });
+
+  renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+  function setHover(abbr) {
+    if (hovered === abbr) return;
+    if (hovered && stateEls[hovered]) {
+      stateEls[hovered].hovered = false;
+      stateEls[hovered].update();
+    }
+    hovered = abbr;
+    if (abbr && stateEls[abbr]) {
+      stateEls[abbr].hovered = true;
+      stateEls[abbr].update();
+      hoverState(abbr);
+    } else {
+      hideTooltip();
+    }
+  }
 
   /* ---------- 提示卡 ---------- */
   function hoverState(abbr) {
@@ -85,29 +357,23 @@
     tooltip.classList.add('is-on');
   }
 
-  function moveTooltip(e) {
-    placeTooltip(e.clientX, e.clientY, false);
-  }
-
-  function placeTooltip(x, y, forceBelow) {
-    const below = forceBelow || y < 190;
-    tooltip.classList.toggle('is-below', below);
+  function placeTooltip(x, y) {
+    tooltip.classList.remove('is-below');
     const half = Math.min(130, Math.max(80, tooltip.offsetWidth / 2));
     const left = Math.min(Math.max(x, half + 10), window.innerWidth - half - 10);
     tooltip.style.left = left + 'px';
-    tooltip.style.top = Math.max(y, 12) + 'px';
+    tooltip.style.top = Math.max(y + 12, 12) + 'px';
   }
 
-  function hideTooltip() {
-    tooltip.classList.remove('is-on');
-  }
+  function hideTooltip() { tooltip.classList.remove('is-on'); }
 
   /* ---------- 选中州 ---------- */
   function selectState(abbr, writeHash) {
     selected = abbr;
-    Object.values(stateEls).forEach(el => el.classList.remove('is-selected'));
-    if (stateEls[abbr]) stateEls[abbr].classList.add('is-selected');
+    Object.values(stateEls).forEach(s => { s.selected = false; s.update(); });
+    if (stateEls[abbr]) { stateEls[abbr].selected = true; stateEls[abbr].update(); }
     renderPanel(abbr);
+    atlasGrid.classList.add('has-selection');
     if (window.matchMedia('(hover: none)').matches) hideTooltip();
     if (window.innerWidth <= 720) {
       setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
@@ -119,8 +385,9 @@
 
   function clearSelection() {
     selected = null;
-    Object.values(stateEls).forEach(el => el.classList.remove('is-selected'));
+    Object.values(stateEls).forEach(s => { s.selected = false; s.update(); });
     renderPanel(null);
+    atlasGrid.classList.remove('has-selection');
     try { history.replaceState(null, '', location.pathname + location.search); } catch (err) { /* ignore */ }
   }
 
@@ -130,7 +397,7 @@
       panel.innerHTML =
         '<div class="panel-empty">' +
           '<h3>选择一个州</h3>' +
-          '<p>鼠标移到地图上会显示州名和文化标签，点击后这里显示完整名片。</p>' +
+          '<p>鼠标移到地图上，州会升起并显示名称和标签；点击后这里显示完整名片。</p>' +
           '<div class="panel-regions">' +
             Object.keys(REGIONS).map(key => {
               const r = REGIONS[key];
@@ -141,7 +408,7 @@
               '</div>';
             }).join('') +
           '</div>' +
-          '<div class="panel-tip"><b>提示</b><span>按 Esc 可以取消选中；点击上方文化区或图例，只保留该区域的州。</span></div>' +
+          '<div class="panel-tip"><b>提示</b><span>按 Esc 可以取消选中；拖动旋转视角，滚轮缩放。</span></div>' +
           '<div class="panel-foot-note">点击查看 · Esc 取消</div>' +
         '</div>';
       return;
@@ -178,9 +445,6 @@
     panel.querySelector('[data-action="random"]').addEventListener('click', randomState);
     panel.querySelector('[data-action="region"]').addEventListener('click', () => {
       setRegionFilter(activeCorridor ? 'all' : info.region);
-      if (window.innerWidth > 1120) {
-        document.getElementById('mapCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
     });
   }
 
@@ -196,11 +460,7 @@
   /* ---------- 筛选 ---------- */
   function buildChips() {
     const items = [{ key: 'all', name: '全部', count: 51 }].concat(
-      Object.keys(REGIONS).map(key => ({
-        key: key,
-        name: REGIONS[key].name,
-        count: regionCount[key]
-      }))
+      Object.keys(REGIONS).map(key => ({ key, name: REGIONS[key].name, count: regionCount[key] }))
     );
     chipsEl.innerHTML = items.map(item =>
       '<button type="button" class="chip' + (item.key === 'all' ? ' is-on' : '') + '" data-region="' + item.key + '">' +
@@ -217,7 +477,6 @@
       '<button type="button" data-region="' + key + '"><i style="--c:' + REGIONS[key].color + '"></i>' +
       REGIONS[key].name + '</button>'
     ).join('') + '<span class="legend-all">点击图例筛选</span>';
-
     legendEl.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
         setRegionFilter(regionFilter === btn.dataset.region ? 'all' : btn.dataset.region);
@@ -228,20 +487,13 @@
   function setRegionFilter(region) {
     regionFilter = region;
     if (activeCorridor) exitCorridor(false);
-    if (query) {
-      query = '';
-      searchInput.value = '';
-    }
+    if (query) { query = ''; searchInput.value = ''; }
     syncFilters();
   }
 
   function syncFilters() {
-    chipsEl.querySelectorAll('.chip').forEach(btn => {
-      btn.classList.toggle('is-on', btn.dataset.region === regionFilter);
-    });
-    legendEl.querySelectorAll('button').forEach(btn => {
-      btn.classList.toggle('is-on', btn.dataset.region === regionFilter);
-    });
+    chipsEl.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('is-on', btn.dataset.region === regionFilter));
+    legendEl.querySelectorAll('button').forEach(btn => btn.classList.toggle('is-on', btn.dataset.region === regionFilter));
     applyFilters();
   }
 
@@ -260,12 +512,13 @@
   function applyFilters() {
     let count = 0;
     const corridorSet = activeCorridor ? activeCorridor.states : null;
-
     Object.keys(stateEls).forEach(abbr => {
       const ok = matches(STATES[abbr]);
       if (ok) count += 1;
+      const s = stateEls[abbr];
       const dimmed = !ok || (corridorSet !== null && corridorSet.indexOf(abbr) === -1);
-      stateEls[abbr].classList.toggle('is-dim', dimmed);
+      s.dimmed = dimmed;
+      s.update();
     });
 
     if (activeCorridor) {
@@ -279,30 +532,21 @@
     }
   }
 
-  /* ---------- 随机漫游 ---------- */
+  /* ---------- 随机 ---------- */
   function randomState() {
-    let pool = Object.keys(stateEls).filter(abbr => !stateEls[abbr].classList.contains('is-dim'));
-    if (!pool.length) {
-      setRegionFilter('all');
-      pool = Object.keys(stateEls);
-    }
+    let pool = Object.keys(stateEls).filter(abbr => !stateEls[abbr].dimmed);
+    if (!pool.length) { setRegionFilter('all'); pool = Object.keys(stateEls); }
     pool = pool.filter(abbr => abbr !== selected);
     if (!pool.length) pool = Object.keys(stateEls);
     const pick = pool[Math.floor(Math.random() * pool.length)];
     selectState(pick, true);
     flashState(pick);
-    if (window.innerWidth <= 1120) {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
   }
 
   function flashState(abbr) {
-    const el = stateEls[abbr];
-    if (!el) return;
-    el.classList.remove('is-flash');
-    void el.getBoundingClientRect();
-    el.classList.add('is-flash');
-    setTimeout(() => el.classList.remove('is-flash'), 900);
+    const s = stateEls[abbr];
+    if (!s) return;
+    s.group.position.y = 2.4;
   }
 
   /* ---------- 小州快捷 ---------- */
@@ -317,15 +561,14 @@
       SMALL_STATES.map(([abbr, label]) =>
         '<button type="button" data-abbr="' + abbr + '"><b>' + abbr + '</b>' + label + '</button>'
       ).join('') + '</div>';
-
     wrap.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('mouseenter', () => {
         const abbr = btn.dataset.abbr;
-        hoverState(abbr);
+        setHover(abbr);
         const r = btn.getBoundingClientRect();
-        placeTooltip(r.left + r.width / 2, r.top - 6, false);
+        placeTooltip(r.left + r.width / 2, r.top - 6);
       });
-      btn.addEventListener('mouseleave', hideTooltip);
+      btn.addEventListener('mouseleave', () => { setHover(null); hideTooltip(); });
       btn.addEventListener('click', () => {
         selectState(btn.dataset.abbr, true);
         flashState(btn.dataset.abbr);
@@ -349,14 +592,10 @@
         '</div>' +
       '</button>'
     ).join('');
-
     corridorGrid.querySelectorAll('.corridor-card').forEach(card => {
       card.addEventListener('click', () => {
-        if (activeCorridor && activeCorridor.id === card.dataset.id) {
-          exitCorridor(true);
-        } else {
-          enterCorridor(card.dataset.id);
-        }
+        if (activeCorridor && activeCorridor.id === card.dataset.id) exitCorridor(true);
+        else enterCorridor(card.dataset.id);
       });
     });
   }
@@ -365,21 +604,17 @@
     const corridor = CORRIDORS.find(c => c.id === id);
     if (!corridor) return;
     activeCorridor = corridor;
-
     regionFilter = 'all';
     query = '';
     searchInput.value = '';
     syncFilters();
 
-    Object.values(stateEls).forEach(el => {
-      el.classList.remove('is-corridor');
-      el.style.animationDelay = '';
-    });
-    corridor.states.forEach((abbr, i) => {
-      const el = stateEls[abbr];
-      if (!el) return;
-      el.classList.add('is-corridor');
-      el.style.animationDelay = (i * 0.13) + 's';
+    Object.values(stateEls).forEach(s => { s.corridor = false; s.update(); });
+    corridor.states.forEach(abbr => {
+      const s = stateEls[abbr];
+      if (!s) return;
+      s.corridor = true;
+      s.update();
     });
 
     corridorGrid.querySelectorAll('.corridor-card').forEach(card => {
@@ -390,18 +625,11 @@
     cbDesc.textContent = corridor.desc;
     banner.hidden = false;
     applyFilters();
-
-    if (window.innerWidth > 1120) {
-      document.getElementById('mapCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
   }
 
   function exitCorridor(scrollBack) {
     activeCorridor = null;
-    Object.values(stateEls).forEach(el => {
-      el.classList.remove('is-corridor');
-      el.style.animationDelay = '';
-    });
+    Object.values(stateEls).forEach(s => { s.corridor = false; s.update(); });
     corridorGrid.querySelectorAll('.corridor-card').forEach(card => card.classList.remove('is-on'));
     banner.hidden = true;
     applyFilters();
@@ -416,26 +644,15 @@
     if (activeCorridor) exitCorridor(false);
     applyFilters();
   });
-
   document.getElementById('randomBtn').addEventListener('click', randomState);
   document.getElementById('cbClose').addEventListener('click', () => exitCorridor(false));
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (activeCorridor) {
-      exitCorridor(false);
-    } else if (query) {
-      query = '';
-      searchInput.value = '';
-      searchInput.blur();
-      applyFilters();
-    } else if (selected) {
-      clearSelection();
-    }
+    if (activeCorridor) exitCorridor(false);
+    else if (query) { query = ''; searchInput.value = ''; searchInput.blur(); applyFilters(); }
+    else if (selected) clearSelection();
   });
-
-  // 点击地图空白处 / 页面其他区域时隐藏提示
-  window.addEventListener('scroll', hideTooltip, { passive: true });
 
   /* ---------- 启动 ---------- */
   buildChips();
@@ -444,6 +661,9 @@
   buildCorridors();
   renderPanel(null);
   applyFilters();
+
+  // 初次画布尺寸校准
+  requestAnimationFrame(() => { resize(); });
 
   const hash = location.hash || '';
   if (hash.indexOf('#state-') === 0) {

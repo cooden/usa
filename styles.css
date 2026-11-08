@@ -253,9 +253,18 @@ main { position: relative; z-index: 1; }
 .atlas { padding-bottom: clamp(60px, 8vw, 100px); }
 .atlas-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.68fr) minmax(330px, 0.92fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+.atlas-grid.has-selection {
+  grid-template-columns: minmax(0, 1.55fr) minmax(330px, 0.95fr);
+}
+.atlas-grid .panel { display: none; }
+.atlas-grid.has-selection .panel { display: block; animation: panelIn 0.32s var(--ease) both; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .map-card {
   position: relative;
@@ -263,9 +272,9 @@ main { position: relative; z-index: 1; }
   border: 1px solid var(--line);
   border-radius: 24px;
   background:
-    radial-gradient(700px 400px at 50% 0%, rgba(74, 110, 232, 0.06), transparent 70%),
-    #fdfcf9;
-  box-shadow: 0 22px 60px rgba(20, 22, 28, 0.05);
+    radial-gradient(900px 420px at 50% -10%, rgba(74, 110, 232, 0.1), transparent 65%),
+    #05070b;
+  box-shadow: 0 22px 60px rgba(20, 22, 28, 0.18);
   overflow: hidden;
 }
 .map-card::after {
@@ -275,8 +284,8 @@ main { position: relative; z-index: 1; }
   pointer-events: none;
   border-radius: inherit;
   background-image:
-    linear-gradient(rgba(20, 22, 28, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 22, 28, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 46px 46px;
   mask-image: radial-gradient(circle at 50% 45%, #000 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 30%, transparent 78%);
@@ -288,35 +297,29 @@ main { position: relative; z-index: 1; }
   padding: 2px 4px 10px;
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: var(--dim);
+  color: rgba(220, 224, 235, 0.55);
 }
 .live-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--we);
 }
-.map-hint { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 0.14em; }
+.map-hint { margin-left: auto; font-size: 10px; color: rgba(220, 224, 235, 0.4); letter-spacing: 0.14em; }
 
-.map-canvas { position: relative; }
-#map {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-  touch-action: manipulation;
-}
+.map-canvas { position: relative; height: clamp(440px, 60vh, 740px); border-radius: 14px; overflow: hidden; background: #05070b; }
+.map-canvas canvas { display: block; width: 100%; height: 100%; }
 .map-meta {
   position: absolute;
   font-size: 8.5px;
   letter-spacing: 0.22em;
-  color: rgba(20, 22, 28, 0.3);
+  color: rgba(220, 224, 235, 0.34);
   pointer-events: none;
   user-select: none;
 }
-.map-meta-bl { left: 6px; bottom: 2px; }
-.map-meta-tr { right: 6px; top: 2px; letter-spacing: 0.1em; }
-.crosshair { color: rgba(185, 130, 32, 0.65); }
-.north-arrow { color: rgba(20, 22, 28, 0.38); }
+.map-meta-bl { left: 10px; bottom: 8px; }
+.map-meta-tr { right: 10px; top: 10px; letter-spacing: 0.1em; }
+.crosshair { color: rgba(244, 184, 96, 0.75); }
+.north-arrow { color: rgba(220, 224, 235, 0.38); }
 
 /* ---------- 州 ---------- */
 #states .st {

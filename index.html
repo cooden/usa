@@ -53,21 +53,19 @@
       <button class="ghost-btn" id="randomBtn" type="button" aria-label="随机看一个州"><span class="gb-text">随机看一州</span> <span>↻</span></button>
     </div>
 
-    <div class="atlas-grid">
+    <div class="atlas-grid" id="atlasGrid">
       <div class="map-card" id="mapCard">
         <div class="map-topline">
           <span class="live-dot"></span>
           <span id="mapStatus">51 个州与特区</span>
-          <span class="map-hint">悬停预览，点击查看</span>
+          <span class="map-hint">悬停升起，点击查看</span>
         </div>
 
         <div class="map-canvas" id="mapCanvas">
-          <svg id="map" viewBox="-58 13 1016 594" role="img" aria-label="美国各州文化地图"></svg>
-
           <div class="map-meta map-meta-bl">
-            <span class="crosshair">✛</span> ALBERS USA PROJECTION
+            <span class="crosshair">✛</span> THREE.JS · ALBERS USA
           </div>
-          <div class="map-meta map-meta-tr">N <span class="north-arrow">↑</span></div>
+          <div class="map-meta map-meta-tr">拖动旋转 · 滚轮缩放</div>
 
           <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
 
@@ -119,6 +117,7 @@
   <a href="simple/">查看效果简版 →</a>
 </footer>
 
+<script src="assets/three.min.js"></script>
 <script src="assets/us-paths.js"></script>
 <script src="assets/fips.js"></script>
 <script src="assets/data.js"></script>
