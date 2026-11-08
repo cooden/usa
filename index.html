@@ -66,14 +66,20 @@ s.parentNode.insertBefore(hm, s);
         <div class="map-topline">
           <span class="live-dot"></span>
           <span id="mapStatus">51 个州与特区</span>
-          <span class="map-hint">悬停升起，点击查看</span>
+          <span class="map-hint">
+            <span class="hint-desktop">悬停升起，点击查看</span>
+            <span class="hint-mobile">点击查看名片</span>
+          </span>
         </div>
 
         <div class="map-canvas" id="mapCanvas">
           <div class="map-meta map-meta-bl">
             <span class="crosshair">✛</span> THREE.JS · ALBERS USA
           </div>
-          <div class="map-meta map-meta-tr">拖动旋转 · 滚轮缩放</div>
+          <div class="map-meta map-meta-tr">
+            <span class="meta-desktop">拖动旋转 · 滚轮缩放</span>
+            <span class="meta-mobile">拖动旋转 · 双指缩放</span>
+          </div>
 
           <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
 

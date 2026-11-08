@@ -299,6 +299,7 @@ main { position: relative; z-index: 1; }
   background: var(--we);
 }
 .map-hint { margin-left: auto; font-size: 10px; color: rgba(220, 224, 235, 0.4); letter-spacing: 0.14em; }
+.hint-mobile, .meta-mobile, .tip-mobile { display: none; }
 
 .map-canvas { position: relative; height: clamp(440px, 60vh, 740px); border-radius: 14px; overflow: hidden; background: #05070b; }
 .map-canvas canvas { display: block; width: 100%; height: 100%; }
@@ -626,6 +627,22 @@ main { position: relative; z-index: 1; }
 }
 
 .panel-state { position: relative; animation: rise 0.42s var(--ease) both; }
+.panel-close {
+  display: none;
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 36px; height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 5;
+  align-items: center;
+  justify-content: center;
+}
 .panel-watermark {
   position: absolute;
   top: -24px; right: -14px;
@@ -884,6 +901,14 @@ footer a:hover { color: #7d5307; }
 }
 @media (max-width: 720px) {
   body { font-size: 14px; }
+
+  /* Hero: 去掉开头的大标题和描述，只保留紧凑统计 */
+  .hero { padding-top: 40px; padding-bottom: 24px; }
+  .hero h1 { display: none; }
+  .hero .lede { display: none; }
+  .stats { margin-top: 0; padding-top: 0; border-top: none; gap: 16px 28px; }
+  .stat strong { font-size: 22px; }
+
   .toolbar { align-items: stretch; }
   .chips { width: 100%; flex-wrap: wrap; }
   .chip { flex: none; padding: 8px 12px; }
@@ -891,39 +916,73 @@ footer a:hover { color: #7d5307; }
   .ghost-btn { flex: none; padding: 9px 13px; }
   .ghost-btn .gb-text { display: none; }
   .search-esc { display: none; }
+
   .map-card { padding: 12px 10px 10px; border-radius: 18px; }
-  .map-hint { display: none; }
+  .map-hint { display: inline; }
+  .hint-desktop { display: none; }
+  .hint-mobile { display: inline; }
   .map-meta-bl { display: none; }
+  .meta-desktop { display: none; }
+  .meta-mobile { display: inline; }
+  .map-canvas { height: clamp(380px, 56vh, 560px); }
+
   .corridor-grid { grid-template-columns: 1fr; }
+
+  /* 手机端：面板改为全屏底部弹层 */
+  .atlas-grid.has-selection { grid-template-columns: minmax(0, 1fr); }
+  .atlas-grid.has-selection .panel {
+    display: block;
+    position: fixed;
+    inset: auto 0 0 0;
+    top: 8vh;
+    z-index: 999;
+    border-radius: 20px 20px 0 0;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    padding: 20px 18px 28px;
+    min-height: 0;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: panelSlideUp 0.34s var(--ease) both;
+    box-shadow: 0 -20px 60px rgba(20, 22, 28, 0.28);
+  }
+  .panel-close { display: flex; }
+  .tip-desktop { display: none; }
+  .tip-mobile { display: inline; }
   .panel-empty { display: block; }
-  .panel-regions { margin-top: 22px; }
-  .panel { padding: 24px 20px; }
-  .stats { gap: 20px 32px; }
-  .stat strong { font-size: 24px; }
-  .corridor-banner { left: 8px; right: 8px; bottom: 10px; max-width: none; }
+  .panel-regions { margin-top: 18px; }
   .panel-title h3 { font-size: 26px; }
+  .panel-state h3 { font-size: 26px; }
+  .panel-num { font-size: 72px; }
+  .panel-watermark { font-size: 80px; top: -10px; right: -8px; }
+  .panel-actions { flex-direction: column; }
+  .panel-actions button { width: 100%; justify-content: center; }
+
+  .corridor-banner { left: 8px; right: 8px; bottom: 10px; max-width: none; }
   footer { flex-direction: column; align-items: flex-start; gap: 8px; }
   footer a { margin-left: 0; }
-  .hero h1 { font-size: clamp(32px, 9vw, 56px); }
   .section-head h2 { font-size: clamp(22px, 5vw, 30px); }
-  .panel-state h3 { font-size: 28px; }
-  .panel-num { font-size: 80px; }
-  .about h2 { font-size: 24px; }
+  .about h2 { font-size: 22px; }
+  .corridor-card { padding: 16px 18px; }
+  .corridor-card h3 { font-size: 18px; }
+}
+
+@keyframes panelSlideUp {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @media (max-width: 520px) {
   body { font-size: 13.5px; }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
-  .hero h1 { font-size: clamp(28px, 10vw, 44px); }
-  .hero .lede { font-size: 13px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
   .section-head h2 { font-size: 20px; }
-  .panel { padding: 20px 16px; }
+  .panel { padding: 18px 15px 24px; }
   .panel-title h3 { font-size: 22px; }
-  .panel-num { font-size: 64px; }
+  .panel-num { font-size: 60px; }
   .facts dd { font-size: 12px; }
   .corridor-card h3 { font-size: 17px; }
   .brand-text { font-size: 13px; }
-  .map-canvas { height: clamp(360px, 52vh, 520px); }
   .legend { font-size: 8px; gap: 8px 12px; }
   .small-states button { font-size: 9px; padding: 5px 8px; }
 }

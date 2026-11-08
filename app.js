@@ -397,7 +397,7 @@
       panel.innerHTML =
         '<div class="panel-empty">' +
           '<h3>选择一个州</h3>' +
-          '<p>鼠标移到地图上，州会升起并显示名称和标签；点击后这里显示完整名片。</p>' +
+          '<p class="panel-empty-desc">点击地图上的州，查看完整文化名片。</p>' +
           '<div class="panel-regions">' +
             Object.keys(REGIONS).map(key => {
               const r = REGIONS[key];
@@ -408,7 +408,7 @@
               '</div>';
             }).join('') +
           '</div>' +
-          '<div class="panel-tip"><b>提示</b><span>按 Esc 可以取消选中；拖动旋转视角，滚轮缩放。</span></div>' +
+          '<div class="panel-tip"><b>提示</b><span class="tip-desktop">按 Esc 取消选中；拖动旋转视角，滚轮缩放。</span><span class="tip-mobile">点击地图上的其他州切换；拖动旋转，双指缩放。</span></div>' +
           '<div class="panel-foot-note">点击查看 · Esc 取消</div>' +
         '</div>';
       return;
@@ -423,6 +423,7 @@
 
     panel.innerHTML =
       '<div class="panel-state">' +
+        '<button class="panel-close" type="button" aria-label="关闭">✕</button>' +
         '<span class="panel-watermark">' + abbr + '</span>' +
         '<div class="panel-kicker"><i></i>' + region.name + ' · ' + region.en + '</div>' +
         '<div class="panel-title"><h3>' + info.name + '</h3><span>' + info.en + '</span></div>' +
@@ -446,6 +447,7 @@
     panel.querySelector('[data-action="region"]').addEventListener('click', () => {
       setRegionFilter(activeCorridor ? 'all' : info.region);
     });
+    panel.querySelector('.panel-close').addEventListener('click', clearSelection);
   }
 
   function fact(label, value) {
