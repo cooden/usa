@@ -233,8 +233,9 @@
   });
 
   (culture.majorCities || []).forEach(city => {
-    const px = (city.x - cx) * SCALE;
-    const pz = -(city.y - cy) * SCALE;
+    // city.x / city.z 已是 Three.js 世界坐标，与州几何体共用同一坐标系
+    const px = city.x;
+    const pz = city.z;
     const py = EXTRUDE + 0.15;
 
     // 白色圆点标记
