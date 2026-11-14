@@ -131,6 +131,45 @@ s.parentNode.insertBefore(hm, s);
 </footer>
 
 <script src="assets/three.min.js"></script>
+<script>
+/* 精简版 CSS2DRenderer：把 3D 坐标投影到屏幕，用 DOM 元素显示 */
+THREE.CSS2DObject = function (element) {
+  this.element = element;
+  this.position = new THREE.Vector3();
+  this.element.style.position = 'absolute';
+  this.element.style.pointerEvents = 'none';
+};
+
+THREE.CSS2DRenderer = function () {
+  var _this = this;
+  var _vector = new THREE.Vector3();
+  this.domElement = document.createElement('div');
+  this.domElement.style.overflow = 'hidden';
+  this.domElement.style.position = 'absolute';
+  this.domElement.style.top = '0';
+  this.domElement.style.left = '0';
+  this.domElement.style.width = '100%';
+  this.domElement.style.height = '100%';
+  this.domElement.style.pointerEvents = 'none';
+  this.labels = [];
+  this.getSize = function () { return { width: this.domElement.clientWidth, height: this.domElement.clientHeight }; };
+  this.setSize = function (w, h) { this.domElement.style.width = w + 'px'; this.domElement.style.height = h + 'px'; };
+  this.add = function (obj) { this.labels.push(obj); };
+  this.render = function (scene, camera) {
+    if (camera.parent === null) camera.updateMatrixWorld();
+    var w = this.domElement.clientWidth, h = this.domElement.clientHeight;
+    for (var i = 0; i < this.labels.length; i++) {
+      var obj = this.labels[i];
+      _vector.copy(obj.position).project(camera);
+      var x = (_vector.x * 0.5 + 0.5) * w;
+      var y = (-_vector.y * 0.5 + 0.5) * h;
+      obj.element.style.transform = 'translate(-50%,-50%) translate(' + x + 'px,' + y + 'px)';
+      obj.element.style.zIndex = Math.floor((1 - _vector.z) * 1000);
+      if (obj.element.parentNode !== this.domElement) this.domElement.appendChild(obj.element);
+    }
+  };
+};
+</script>
 <script src="assets/us-paths.js"></script>
 <script src="assets/fips.js"></script>
 <script src="assets/data.js"></script>

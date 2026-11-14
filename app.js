@@ -108,6 +108,15 @@
   renderer.domElement.style.height = '100%';
   renderer.domElement.style.cursor = 'grab';
 
+  // 城市标签渲染器（CSS2D，文字始终面向相机）
+  const labelRenderer = new THREE.CSS2DRenderer();
+  labelRenderer.setSize(mapCanvas.clientWidth || 1, mapCanvas.clientHeight || 1);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0';
+  labelRenderer.domElement.style.left = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  mapCanvas.appendChild(labelRenderer.domElement);
+
   // 灯光
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
@@ -214,6 +223,35 @@
     };
   });
 
+  /* ---------- 主要城市标注 ---------- */
+  const cityGroup = new THREE.Group();
+  scene.add(cityGroup);
+
+  const cityDotGeom = new THREE.RingGeometry(0.22, 0.55, 24);
+  const cityDotMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.9
+  });
+
+  (culture.majorCities || []).forEach(city => {
+    const px = (city.x - cx) * SCALE;
+    const pz = -(city.y - cy) * SCALE;
+    const py = EXTRUDE + 0.15;
+
+    // 白色圆点标记
+    const dot = new THREE.Mesh(cityDotGeom, cityDotMat);
+    dot.rotation.x = -Math.PI / 2;
+    dot.position.set(px, py, pz);
+    cityGroup.add(dot);
+
+    // 文字标签（CSS2D，始终面向相机）
+    const div = document.createElement('div');
+    div.className = 'city-label';
+    div.innerHTML = '<span class="city-name">' + city.name + '</span>';
+    const label = new THREE.CSS2DObject(div);
+    label.position.set(px, py + 0.8, pz);
+    labelRenderer.add(label);
+  });
+
   /* ---------- 相机 / 轨道控制 ---------- */
   const orbit = { radius: 44, theta: 0, phi: 1.0, target: new THREE.Vector3(0, 0, 0) };
   function updateCamera() {
@@ -238,12 +276,14 @@
       s.group.scale.setScalar(next);
     });
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
   }
   animate();
 
   function resize() {
     const w = mapCanvas.clientWidth || 1;
     const h = mapCanvas.clientHeight || 1;
+    labelRenderer.setSize(w, h);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();

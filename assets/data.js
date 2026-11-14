@@ -401,5 +401,20 @@ window.US_CULTURE = {
       states: ['TX', 'NM', 'AZ', 'CA', 'CO', 'NV'],
       desc: '从德州到加州的边境地带，西班牙语地名、土坯建筑和墨西哥饮食沿美墨边境分布。'
     }
+  ],
+  // 主要城市标注（地图坐标系，与 us-paths.js 一致）
+  majorCities: [
+    { name: '纽约', en: 'New York', x: 886.8, y: 192.4 },
+    { name: '洛杉矶', en: 'Los Angeles', x: 69.0, y: 345.3 },
+    { name: '芝加哥', en: 'Chicago', x: 631.0, y: 244.3 },
+    { name: '休斯顿', en: 'Houston', x: 475.6, y: 553.2 },
+    { name: '费城', en: 'Philadelphia', x: 848.1, y: 234.1 },
+    { name: '凤凰城', en: 'Phoenix', x: 209.6, y: 396.2 },
+    { name: '达拉斯', en: 'Dallas', x: 440.4, y: 486.5 },
+    { name: '旧金山', en: 'San Francisco', x: 44.5, y: 263.8 },
+    { name: '西雅图', en: 'Seattle', x: 105.2, y: 30.9 },
+    { name: '丹佛', en: 'Denver', x: 330.0, y: 283.8 },
+    { name: '波士顿', en: 'Boston', x: 914.3, y: 166.8 },
+    { name: '亚特兰大', en: 'Atlanta', x: 743.0, y: 430.0 }
   ]
 };
