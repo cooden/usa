@@ -328,6 +328,18 @@ main { position: relative; z-index: 1; }
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+/* 城市标签：选中/悬停该州时高亮为区域色胶囊，其余弱化 */
+.city-label.is-active {
+  color: #ffffff;
+  background: var(--city-accent, #5b7bd6);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+  text-shadow: none;
+}
+.city-label.is-dim { opacity: 0.45; }
 .map-meta {
   position: absolute;
   font-size: 8.5px;
@@ -740,6 +752,20 @@ main { position: relative; z-index: 1; }
   color: var(--dim);
 }
 .panel-city strong { font-weight: 500; color: var(--muted); font-size: 11.5px; text-align: right; }
+.panel-major-cities { margin-top: 14px; }
+.pmc-label { display: block; font-size: 10px; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 8px; }
+.pmc-label em { font-style: normal; color: var(--muted); letter-spacing: 0; font-size: 9.5px; }
+.pmc-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.pmc-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-soft);
+  font-size: 11.5px; color: var(--text);
+}
+.pmc-item i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); flex-shrink: 0; box-shadow: 0 0 5px var(--c); }
+.pmc-item b { font-weight: 600; }
+.pmc-item small { font-size: 9.5px; color: var(--muted); letter-spacing: 0.02em; }
 .panel-actions { display: flex; gap: 8px; margin-top: 20px; }
 .panel-actions button {
   flex: 1;

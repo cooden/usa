@@ -223,14 +223,12 @@
     };
   });
 
-  /* ---------- 主要城市标注 ---------- */
+  /* ---------- 主要城市标注（响应式：随选中/悬停州高亮） ---------- */
   const cityGroup = new THREE.Group();
   scene.add(cityGroup);
 
   const cityDotGeom = new THREE.RingGeometry(0.22, 0.55, 24);
-  const cityDotMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.9
-  });
+  const cityEls = {};   // name -> { dot, dotMat, div, state, targetScale }
 
   (culture.majorCities || []).forEach(city => {
     // city.x / city.z 已是 Three.js 世界坐标，与州几何体共用同一坐标系
@@ -238,8 +236,11 @@
     const pz = city.z;
     const py = EXTRUDE + 0.15;
 
-    // 白色圆点标记
-    const dot = new THREE.Mesh(cityDotGeom, cityDotMat);
+    // 白色圆点标记（每城独立材质，便于单独变色/透明/缩放）
+    const dotMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.9
+    });
+    const dot = new THREE.Mesh(cityDotGeom, dotMat);
     dot.rotation.x = -Math.PI / 2;
     dot.position.set(px, py, pz);
     cityGroup.add(dot);
@@ -253,7 +254,39 @@
     const label = new THREE.CSS2DObject(div);
     label.position.set(px + lox, py + 0.8, pz + loz);
     labelRenderer.add(label);
+
+    cityEls[city.name] = { dot, dotMat, div, state: city.state, targetScale: 1 };
   });
+
+  // 根据当前选中/悬停州更新城市标记：该州城市高亮（区域色+放大），其余弱化
+  function updateCityMarkers() {
+    const active = selected || hovered;
+    Object.values(cityEls).forEach(c => {
+      const s = stateEls[c.state];
+      const stateDimmed = s ? s.dimmed : false;
+      const isActive = active && c.state === active;
+      let scale = 1, opacity = 0.9, colorHex = 0xffffff, cls = '';
+      if (isActive) {
+        scale = 1.7; opacity = 1;
+        colorHex = s ? REGION_BASE[s.region] : 0xffffff;
+        cls = 'is-active';
+      } else if (stateDimmed) {
+        scale = 0.8; opacity = 0.2; cls = 'is-dim';
+      } else if (active) {
+        scale = 0.9; opacity = 0.45; cls = 'is-dim';
+      }
+      c.targetScale = scale;
+      c.dotMat.opacity = opacity;
+      c.dotMat.color.setHex(colorHex);
+      c.div.classList.toggle('is-active', cls === 'is-active');
+      c.div.classList.toggle('is-dim', cls === 'is-dim');
+      if (cls === 'is-active' && s) {
+        c.div.style.setProperty('--city-accent', REGIONS[s.region].color);
+      } else {
+        c.div.style.removeProperty('--city-accent');
+      }
+    });
+  }
 
   /* ---------- 相机 / 轨道控制 ---------- */
   const orbit = { radius: 44, theta: 0, phi: 1.0, target: new THREE.Vector3(0, 0, 0) };
@@ -277,6 +310,10 @@
       const cur = s.group.scale.x;
       const next = cur + (s.targetScale - cur) * 0.18;
       s.group.scale.setScalar(next);
+    });
+    Object.values(cityEls).forEach(c => {
+      const cur = c.dot.scale.x;
+      c.dot.scale.setScalar(cur + (c.targetScale - cur) * 0.18);
     });
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
@@ -386,6 +423,7 @@
     } else {
       hideTooltip();
     }
+    updateCityMarkers();
   }
 
   /* ---------- 提示卡 ---------- */
@@ -416,6 +454,7 @@
     Object.values(stateEls).forEach(s => { s.selected = false; s.update(); });
     if (stateEls[abbr]) { stateEls[abbr].selected = true; stateEls[abbr].update(); }
     renderPanel(abbr);
+    updateCityMarkers();
     atlasGrid.classList.add('has-selection');
     if (window.matchMedia('(hover: none)').matches) hideTooltip();
     if (window.innerWidth <= 720) {
@@ -430,6 +469,7 @@
     selected = null;
     Object.values(stateEls).forEach(s => { s.selected = false; s.update(); });
     renderPanel(null);
+    updateCityMarkers();
     atlasGrid.classList.remove('has-selection');
     try { history.replaceState(null, '', location.pathname + location.search); } catch (err) { /* ignore */ }
   }
@@ -460,9 +500,16 @@
     const info = STATES[abbr];
     const region = REGIONS[info.region];
     const accent = region.color;
+    const stateCities = (culture.majorCities || []).filter(c => c.state === abbr);
     panel.style.setProperty('--accent', accent);
     panel.style.setProperty('--accent-bg', hexToRgba(accent, 0.1));
     panel.style.setProperty('--accent-soft', hexToRgba(accent, 0.34));
+
+    const majorCitiesHtml = stateCities.length
+      ? '<div class="panel-major-cities"><span class="pmc-label">主要城市 <em>· 地图已标注</em></span><div class="pmc-list">' +
+          stateCities.map(c => '<span class="pmc-item"><i style="--c:' + accent + '"></i><b>' + c.name + '</b><small>' + c.en + '</small></span>').join('') +
+        '</div></div>'
+      : '';
 
     panel.innerHTML =
       '<div class="panel-state">' +
@@ -480,6 +527,7 @@
           fact('人物', info.figure) +
         '</dl>' +
         '<div class="panel-city"><span>代表城市 / 地区</span><strong>' + info.city + '</strong></div>' +
+        majorCitiesHtml +
         '<div class="panel-actions">' +
           '<button type="button" class="primary" data-action="random">换一个州 →</button>' +
           '<button type="button" data-action="region">只看' + region.name + '</button>' +
@@ -575,6 +623,7 @@
     } else {
       statusEl.textContent = '51 个州与特区';
     }
+    updateCityMarkers();
   }
 
   /* ---------- 随机 ---------- */

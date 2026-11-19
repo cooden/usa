@@ -406,18 +406,19 @@ window.US_CULTURE = {
   // 换算：worldX = (svgX - cx) * SCALE, worldZ = (svgY - cy) * SCALE
   //   （州几何体经 rotateX(-PI/2) 后，shape 的 y 轴映射为世界 -z，故 worldZ 取正号）
   // x: 东正西负, z: 南正北负
+  // state: 城市所属州缩写，用于选中州时高亮对应城市标记 + 卡片中列出
   majorCities: [
-    { name: '纽约', en: 'New York', x: 12.92, z: -3.47, lox: 0.3, loz: 0 },
-    { name: '洛杉矶', en: 'Los Angeles', x: -11.26, z: 1.05 },
-    { name: '芝加哥', en: 'Chicago', x: 5.36, z: -1.94 },
-    { name: '休斯顿', en: 'Houston', x: 0.77, z: 7.20 },
-    { name: '费城', en: 'Philadelphia', x: 11.78, z: -2.24, lox: -0.7, loz: 0.6 },
-    { name: '凤凰城', en: 'Phoenix', x: -7.10, z: 2.56 },
-    { name: '达拉斯', en: 'Dallas', x: -0.28, z: 5.22 },
-    { name: '旧金山', en: 'San Francisco', x: -11.98, z: -1.36 },
-    { name: '西雅图', en: 'Seattle', x: -10.19, z: -8.25 },
-    { name: '丹佛', en: 'Denver', x: -3.54, z: -0.77 },
-    { name: '波士顿', en: 'Boston', x: 13.74, z: -4.23, lox: 0.9, loz: -1.4 },
-    { name: '亚特兰大', en: 'Atlanta', x: 8.67, z: 3.55 }
+    { name: '纽约', en: 'New York', state: 'NY', x: 12.92, z: -3.47, lox: 0.3, loz: 0 },
+    { name: '洛杉矶', en: 'Los Angeles', state: 'CA', x: -11.26, z: 1.05 },
+    { name: '芝加哥', en: 'Chicago', state: 'IL', x: 5.36, z: -1.94 },
+    { name: '休斯顿', en: 'Houston', state: 'TX', x: 0.77, z: 7.20 },
+    { name: '费城', en: 'Philadelphia', state: 'PA', x: 11.78, z: -2.24, lox: -0.7, loz: 0.6 },
+    { name: '凤凰城', en: 'Phoenix', state: 'AZ', x: -7.10, z: 2.56 },
+    { name: '达拉斯', en: 'Dallas', state: 'TX', x: -0.28, z: 5.22 },
+    { name: '旧金山', en: 'San Francisco', state: 'CA', x: -11.98, z: -1.36 },
+    { name: '西雅图', en: 'Seattle', state: 'WA', x: -10.19, z: -8.25 },
+    { name: '丹佛', en: 'Denver', state: 'CO', x: -3.54, z: -0.77 },
+    { name: '波士顿', en: 'Boston', state: 'MA', x: 13.74, z: -4.23, lox: 0.9, loz: -1.4 },
+    { name: '亚特兰大', en: 'Atlanta', state: 'GA', x: 8.67, z: 3.55 }
   ]
 };
