@@ -430,10 +430,17 @@
   function hoverState(abbr) {
     const info = STATES[abbr];
     const region = REGIONS[info.region];
+    const cities = (culture.majorCities || []).filter(c => c.state === abbr);
+    const citiesHtml = cities.length
+      ? '<div class="tt-cities"><span class="tt-cities-label">主要城市</span>' +
+          cities.map(c => '<span class="tt-city"><i style="--dot:' + region.color + '"></i>' + c.name + '</span>').join('') +
+        '</div>'
+      : '';
     tooltip.innerHTML =
       '<div class="tt-name"><b>' + info.name + '</b><i>' + info.en + '</i></div>' +
       '<div class="tt-region" style="--dot:' + region.color + '">' + region.name + ' · ' + region.en + '</div>' +
       '<div class="tt-tags">' + info.tags.map(t => '<span>' + t + '</span>').join('') + '</div>' +
+      citiesHtml +
       '<div class="tt-cue">' + (selected === abbr ? '已选中 · 点击再次查看' : '点击查看完整名片') + '</div>';
     tooltip.classList.add('is-on');
   }
@@ -471,6 +478,7 @@
     renderPanel(null);
     updateCityMarkers();
     atlasGrid.classList.remove('has-selection');
+    hideTooltip();
     try { history.replaceState(null, '', location.pathname + location.search); } catch (err) { /* ignore */ }
   }
 

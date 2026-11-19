@@ -471,6 +471,16 @@ main { position: relative; z-index: 1; }
   font-size: 9.5px;
   color: #a3aab9;
 }
+.tt-cities { display: flex; align-items: center; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.tt-cities-label { font-size: 9px; color: #737b8c; letter-spacing: 0.08em; }
+.tt-city {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 9.5px; color: #cfd5e2;
+}
+.tt-city i { width: 5px; height: 5px; border-radius: 50%; background: var(--dot); flex-shrink: 0; }
 .tt-cue { margin-top: 7px; font-size: 9.5px; color: #737b8c; letter-spacing: 0.08em; }
 
 /* ---------- 走廊横幅 ---------- */
