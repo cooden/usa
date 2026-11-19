@@ -403,19 +403,21 @@ window.US_CULTURE = {
     }
   ],
   // 主要城市标注 —— 直接使用 Three.js 世界坐标 (x, z)，与州几何体同一坐标系
-  // x: 东正西负, z: 北正南负（与 app.js 中州的 ExtrudeGeometry 坐标一致）
+  // 换算：worldX = (svgX - cx) * SCALE, worldZ = (svgY - cy) * SCALE
+  //   （州几何体经 rotateX(-PI/2) 后，shape 的 y 轴映射为世界 -z，故 worldZ 取正号）
+  // x: 东正西负, z: 南正北负
   majorCities: [
-    { name: '纽约', en: 'New York', x: 13.2, z: 2.8 },
-    { name: '洛杉矶', en: 'Los Angeles', x: -11.5, z: -1.8 },
-    { name: '芝加哥', en: 'Chicago', x: 5.6, z: 2.5 },
-    { name: '休斯顿', en: 'Houston', x: 2.2, z: -7.5 },
-    { name: '费城', en: 'Philadelphia', x: 11.8, z: 1.7 },
-    { name: '凤凰城', en: 'Phoenix', x: -6.8, z: -3.8 },
-    { name: '达拉斯', en: 'Dallas', x: 1.8, z: -3.0 },
-    { name: '旧金山', en: 'San Francisco', x: -12.3, z: 3.5 },
-    { name: '西雅图', en: 'Seattle', x: -10.5, z: 8.2 },
-    { name: '丹佛', en: 'Denver', x: -3.0, z: 0.8 },
-    { name: '波士顿', en: 'Boston', x: 14.0, z: 4.4 },
-    { name: '亚特兰大', en: 'Atlanta', x: 8.5, z: -2.5 }
+    { name: '纽约', en: 'New York', x: 12.92, z: -3.47, lox: 0.3, loz: 0 },
+    { name: '洛杉矶', en: 'Los Angeles', x: -11.26, z: 1.05 },
+    { name: '芝加哥', en: 'Chicago', x: 5.36, z: -1.94 },
+    { name: '休斯顿', en: 'Houston', x: 0.77, z: 7.20 },
+    { name: '费城', en: 'Philadelphia', x: 11.78, z: -2.24, lox: -0.7, loz: 0.6 },
+    { name: '凤凰城', en: 'Phoenix', x: -7.10, z: 2.56 },
+    { name: '达拉斯', en: 'Dallas', x: -0.28, z: 5.22 },
+    { name: '旧金山', en: 'San Francisco', x: -11.98, z: -1.36 },
+    { name: '西雅图', en: 'Seattle', x: -10.19, z: -8.25 },
+    { name: '丹佛', en: 'Denver', x: -3.54, z: -0.77 },
+    { name: '波士顿', en: 'Boston', x: 13.74, z: -4.23, lox: 0.9, loz: -1.4 },
+    { name: '亚特兰大', en: 'Atlanta', x: 8.67, z: 3.55 }
   ]
 };

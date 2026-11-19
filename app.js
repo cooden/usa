@@ -244,12 +244,14 @@
     dot.position.set(px, py, pz);
     cityGroup.add(dot);
 
-    // 文字标签（CSS2D，始终面向相机）
+    // 文字标签（CSS2D，始终面向相机）；lox/loz 为可选标签偏移，避免相邻城市重叠
+    const lox = city.lox || 0;
+    const loz = city.loz || 0;
     const div = document.createElement('div');
     div.className = 'city-label';
     div.innerHTML = '<span class="city-name">' + city.name + '</span>';
     const label = new THREE.CSS2DObject(div);
-    label.position.set(px, py + 0.8, pz);
+    label.position.set(px + lox, py + 0.8, pz + loz);
     labelRenderer.add(label);
   });
 
